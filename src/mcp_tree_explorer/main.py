@@ -1,7 +1,7 @@
 """Main entry point for the MCP Tree Explorer."""
 
 import sys
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from mcp.server.fastmcp import Context, FastMCP
 
@@ -16,7 +16,7 @@ def create_server() -> FastMCP:
     @mcp.tool()
     async def project_tree(
         directory: str = ".",
-        depth: Optional[int] = None,
+        depth: Union[int, str, None] = None,
         ignore: Optional[str] = None,
         keep: Optional[str] = None,
         ctx: Context = None,
@@ -30,6 +30,15 @@ def create_server() -> FastMCP:
             ignore: Additional patterns to ignore, comma-separated
             keep: Patterns to keep even if they match auto-ignore patterns, comma-separated
         """
+        # Handle empty string for depth
+        if depth == "":
+            depth = None
+        elif isinstance(depth, str):
+            try:
+                depth = int(depth)
+            except ValueError:
+                return f"Error: depth parameter '{depth}' must be a valid integer or empty."
+        
         # Check if tree is installed
         if not is_tree_installed():
             if ctx:
