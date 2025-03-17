@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-tree-explorer"
+version = "0.1.0"
+description = "MCP tool that provides directory tree visualization for Cursor"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Carter LaSalle", email = "carterlasalle@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "mcp>=1.2.0",
+]
+
+[project.scripts]
+mcp-tree-explorer = "mcp_tree_explorer.main:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["mcp_tree_explorer"]
+
+[tool.uv]
+# uv-specific configuration
+default-python = "3.10"
+system-packages = false  # Don't use system site-packages
+exclude = ["__pycache__", "*.pyc", "*.pyo", "*.pyd", "*.so", "*.dylib", "*.egg-info"]
+
+# Specify publishing information if needed
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://upload.pypi.org/legacy/"
