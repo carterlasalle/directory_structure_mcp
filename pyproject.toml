@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-tree-explorer"
-version = "__version__"
+version = "0.1.2"
 description = "MCP tool that provides directory tree visualization for Cursor"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"

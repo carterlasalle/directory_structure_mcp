@@ -1,9 +1,10 @@
 """Main entry point for the MCP Tree Explorer."""
 
 import sys
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from mcp.server.fastmcp import Context, FastMCP
+from pydantic import Field, field_validator
 
 from .tree_utils import install_tree, is_tree_installed, run_tree
 
@@ -13,10 +14,24 @@ def create_server() -> FastMCP:
     # Create a simple MCP server focused on tools
     mcp = FastMCP("Project Tree Explorer")
     
-    @mcp.tool()
+    # Define custom field validation for the tool
+    class ProjectTreeParams:
+        @field_validator("depth", mode="before")
+        @classmethod
+        def validate_depth(cls, v: Any) -> Optional[int]:
+            if v == "" or v is None:
+                return None
+            if isinstance(v, int):
+                return v
+            try:
+                return int(v)
+            except (ValueError, TypeError):
+                raise ValueError(f"depth parameter must be a valid integer or empty, got {v!r}")
+    
+    @mcp.tool(validator_handlers=[ProjectTreeParams])
     async def project_tree(
         directory: str = ".",
-        depth: Union[int, str, None] = None,
+        depth: Optional[int] = Field(None, description="Maximum depth of the tree (unlimited if not specified or 0)"),
         ignore: Optional[str] = None,
         keep: Optional[str] = None,
         ctx: Context = None,
@@ -26,19 +41,10 @@ def create_server() -> FastMCP:
         
         Args:
             directory: The directory to examine (default: current directory)
-            depth: Maximum depth of the tree (unlimited if not specified)
+            depth: Maximum depth of the tree (unlimited if not specified or 0)
             ignore: Additional patterns to ignore, comma-separated
             keep: Patterns to keep even if they match auto-ignore patterns, comma-separated
         """
-        # Handle empty string for depth
-        if depth == "":
-            depth = None
-        elif isinstance(depth, str):
-            try:
-                depth = int(depth)
-            except ValueError:
-                return f"Error: depth parameter '{depth}' must be a valid integer or empty."
-        
         # Check if tree is installed
         if not is_tree_installed():
             if ctx:
@@ -63,10 +69,11 @@ def create_server() -> FastMCP:
         
         # Show the tree command configuration
         output += f"Examining directory: {directory}\n"
-        if depth is not None:
+        if depth is not None and depth > 0:
             output += f"Maximum depth: {depth}\n"
         else:
             output += "Maximum depth: unlimited\n"
+            depth = None  # Set to None if 0 or negative to indicate unlimited depth
             
         if ignore_patterns:
             output += f"Additional ignore patterns: {', '.join(ignore_patterns)}\n"
