@@ -1,10 +1,9 @@
 """Main entry point for the MCP Tree Explorer."""
 
 import sys
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from mcp.server.fastmcp import Context, FastMCP
-from pydantic import Field, field_validator
 
 from .tree_utils import install_tree, is_tree_installed, run_tree
 
@@ -14,24 +13,10 @@ def create_server() -> FastMCP:
     # Create a simple MCP server focused on tools
     mcp = FastMCP("Project Tree Explorer")
     
-    # Define custom field validation for the tool
-    class ProjectTreeParams:
-        @field_validator("depth", mode="before")
-        @classmethod
-        def validate_depth(cls, v: Any) -> Optional[int]:
-            if v == "" or v is None:
-                return None
-            if isinstance(v, int):
-                return v
-            try:
-                return int(v)
-            except (ValueError, TypeError):
-                raise ValueError(f"depth parameter must be a valid integer or empty, got {v!r}")
-    
-    @mcp.tool(validator_handlers=[ProjectTreeParams])
+    @mcp.tool()
     async def project_tree(
         directory: str = ".",
-        depth: Optional[int] = Field(None, description="Maximum depth of the tree (unlimited if not specified or 0)"),
+        depth: Optional[Any] = None,
         ignore: Optional[str] = None,
         keep: Optional[str] = None,
         ctx: Context = None,
@@ -45,6 +30,17 @@ def create_server() -> FastMCP:
             ignore: Additional patterns to ignore, comma-separated
             keep: Patterns to keep even if they match auto-ignore patterns, comma-separated
         """
+        # Handle depth validation (accept empty string, None, or convert to int)
+        if depth == "" or depth is None:
+            depth = None
+        elif isinstance(depth, int):
+            pass  # Keep as is
+        else:
+            try:
+                depth = int(depth)
+            except (ValueError, TypeError):
+                return f"Error: depth parameter must be a valid integer or empty, got '{depth}'"
+        
         # Check if tree is installed
         if not is_tree_installed():
             if ctx:
